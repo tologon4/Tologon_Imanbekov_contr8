@@ -1,4 +1,4 @@
-@model ForumTitle
+@model AnswerIndexViewModel
 
 @{
     ViewBag.Title = "title";
@@ -6,16 +6,16 @@
 }
 <header>
   <h2>
-    <strong><a class="mx-3" asp-action="Profile" asp-controller="Account" asp-route-userId="@Model.UserId">@Model.User.UserName</a></strong><i class="fa fa-angle-right"></i><span class="mx-3"> @Model.Title</span> <i class="fa fa-angle-right"></i><span class=""> @Model.CreatedTime</span>
+    <strong><a class="mx-3" asp-action="Profile" asp-controller="Account" asp-route-userId="@Model.ForumTitle.UserId">@Model.ForumTitle.User.UserName</a></strong><i class="fa fa-angle-right"></i><span class="mx-3"> @Model.ForumTitle.Title</span> <i class="fa fa-angle-right"></i><span class=""> @Model.ForumTitle.CreatedTime</span>
   </h2>
 </header>
 <div class="response-group">
   <div class="response">
     <div class="response__number">
-      @Model.Id
+      @Model.ForumTitle.Id
     </div>
     <h1 class="response__title">  
-      @Model.Content
+      @Model.ForumTitle.Content
     </h1>
     @if (User.Identity.IsAuthenticated)
     {
@@ -26,9 +26,9 @@
     }
     <div class="post-group" id="answers">
       <div class="num"></div>
-      @foreach (var answer in ViewBag.Answers)
+      @foreach (var answer in @Model.Answers)
       {
-        <div data-num="@i" class="post num">
+        <div data-num="@i" class="post">
           <div class="post__avatar">
             <img src="@answer.User.Avatar" class="msgimg"/>
           </div>
@@ -83,7 +83,11 @@
         
       </div>
     }
-    
+    <div class="col-4 mx-auto text-center">
+                @if (Model.PageViewModel.HasPreviousPage)
+                { <a class="btn btn-primary me-4" asp-action="Details" asp-route-id="@Model.ForumTitle.Id" asp-route-page="@(Model.PageViewModel.PageNumber - 1)"> Предыдущий </a> }
+                @if (Model.PageViewModel.HasNextPage)
+                { <a class="btn btn-primary ms-4" asp-action="Details" asp-route-id="@Model.ForumTitle.Id" asp-route-page="@(Model.PageViewModel.PageNumber + 1)"> Следующий </a> }</div>
   </div>
 </div>
 
@@ -109,88 +113,14 @@
       `);
     }
 
-    $(document).ready(function (){
-      let count = @Model.Answers.Count;
-      let cnt = 5; 
-      let cnt_page = Math.ceil(count / cnt); 
-      
-      let paginator = document.querySelector(".paginator");
-      let page = "<button id='prev' disabled>Предыдущий</button>";
-      for (let i = 0; i < cnt_page; i++) {
-        page += "<span data-page=" + i * cnt + "  id=\"page" + (i + 1) + "\">" + (i + 1) + "</span>";
-      }
-        page += "<span data-page=" + i * cnt + "  id=\"page" +  1 + "\">" +   1 + "</span>";
-      
-      page += "<button id='next'>Следующий</button>";
-      paginator.innerHTML = page;
+    $().ready(function (){
      
-      let div_num = document.querySelectorAll(".num");
-      for (let i = 0; i < div_num.length; i++) {
-        if (i < cnt) {
-          div_num[i].style.display = "block";
-        } else {
-          div_num[i].style.display = "none";
-        }
-      }
-      
-      let currentPage = 0;
-      let main_page = document.getElementById("page1");
-      main_page.classList.add("paginator_active");
-
-      function showPage(pageNumber) {
-        let data_page = pageNumber * cnt;
-        main_page.classList.remove("paginator_active");
-        main_page = document.getElementById("page" + (pageNumber + 1));
-        main_page.classList.add("paginator_active");
-
-        let j = 0;
-        for (let i = 0; i < div_num.length; i++) {
-          if (i >= data_page && j < cnt) {
-            div_num[i].style.display = "block";
-            j++;
-          } else {
-            div_num[i].style.display = "none";
-          }
-        }
-
-        document.getElementById('prev').disabled = (pageNumber === 0);
-        document.getElementById('next').disabled = (pageNumber === cnt_page - 1);
-      }
-      
-      function pagination(event) {
-        let target = event.target;
-        
-        if (target.tagName.toLowerCase() === "span") {
-          let pageNumber = parseInt(target.id.replace('page', '')) - 1;
-          currentPage = pageNumber;
-          showPage(pageNumber);
-        }
-        
-        if (target.id === 'prev' && currentPage > 0) {
-          currentPage--;
-          showPage(currentPage);
-        }
-
-        if (target.id === 'next' && currentPage < cnt_page - 1) {
-          currentPage++;
-          showPage(currentPage);
-        }
-      }
-
-      document.querySelectorAll(".paginator span, #prev, #next").forEach(function(element) {
-        element.addEventListener("click", pagination);
-      });
-      
-      $('#down-scroll').click(function(){
-        $('html, body').animate({scrollTop: $(document).height() - $(window).height()}, 600);
-        return false;
-      });
-      
+     
       $('#comment-button').click(function (e){
         console.log('click');
         e.preventDefault();
         let comment = $('#comment-content').val();
-        let forumId = @Model.Id;
+        let forumId = @Model.ForumTitle.Id;
         $.ajax({
           url: '@Url.Action("SendAnswer", "Forum")',
           type: 'POST',
