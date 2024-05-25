@@ -2,7 +2,6 @@ using contr8.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using SignInResult = Microsoft.AspNetCore.Identity.SignInResult;
 
 namespace contr8.Controllers;
@@ -11,7 +10,7 @@ public class AccountController : Controller
 {
     private UserManager<User> _userManager;
     private SignInManager<User> _signInManager;
-    private  IWebHostEnvironment _environment;
+    private IWebHostEnvironment _environment;
     private IHttpContextAccessor _httpContextAccessor;
     private ForumDb _db { get; set; }
 
@@ -74,6 +73,49 @@ public class AccountController : Controller
         return View(model);
     }
 
+    [Authorize]
+    public IActionResult Edit()
+    {
+        User model = _db.Users.FirstOrDefault(u => u.Id == int.Parse(_userManager.GetUserId(User)));
+        EditViewModel user = new EditViewModel()
+        {
+            Email = model.Email,
+            UserName = model.UserName,
+        };
+        return View(user);
+    }
+    [Authorize]
+    [HttpPost]
+    public async Task<IActionResult> Edit(EditViewModel model, IFormFile? uploadedFile)
+    {
+        User user = _db.Users.FirstOrDefault(u=>u.Id==int.Parse(_userManager.GetUserId(User)));
+        var buffer = user.Avatar.Split('=');
+        var buffer2 = buffer[buffer.Length - 1].Split('.');
+        if (ModelState.IsValid)
+        {
+            string? path = null;
+            if (uploadedFile!=null)
+            {
+                string newFileName = Path.ChangeExtension($"{model.UserName.Trim()}-ProfileN={int.Parse(buffer2[0])+1}", Path.GetExtension(uploadedFile.FileName));
+                path= $"/userImages/" + newFileName.Trim();
+                using (var fileStream = new FileStream(_environment.WebRootPath + path, FileMode.Create))
+                {
+                    await uploadedFile.CopyToAsync(fileStream);
+                }
+            }
+            user.Email = model.Email;
+            user.UserName = model.UserName;
+            user.Avatar = path != null ? path : user.Avatar;
+            user.PasswordHash = model.Password != null ? _userManager.PasswordHasher.HashPassword(user, model.Password) : user.PasswordHash;
+            await _userManager.UpdateAsync(user);
+            _db.Users.Update(user);
+            await _db.SaveChangesAsync();
+            return RedirectToAction("Profile", new {userId=user.Id});
+        }
+        ModelState.AddModelError("", "Something went wrong! Please check all info");
+        return View(model);
+    }
+    
     [HttpGet]
     public async Task<IActionResult> Register()
     {

@@ -61,7 +61,15 @@ public class ForumController : Controller
         var titles = _db.ForumTitles.Include(u => u.User).ToList();
         return View(titles);
     }
-    
+
+    public async Task<IActionResult> AnswersResult(int? forumId)
+    {
+        ForumTitle? title = await _db.ForumTitles.Include(u => u.User)
+            .Include(a => a.Answers)
+            .FirstOrDefaultAsync(f => f.Id == forumId);   
+        var answers = _db.Answers.Include(u => u.User).Where(a => title.Answers.Select(a => a.Id).Contains(a.Id)).ToList();
+        return PartialView("_AnswersResult", answers);
+    }
     
     [HttpGet]
     public async Task<IActionResult> Details(int? id)
@@ -100,7 +108,7 @@ public class ForumController : Controller
             user.ForumTitles.Add(model);
             _db.Users.Update(user);
             _db.SaveChanges();
-            return RedirectToAction();
+            return RedirectToAction("Index");
         }
         return View(model);
     }

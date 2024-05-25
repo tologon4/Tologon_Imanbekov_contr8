@@ -1,2 +1,33 @@
 @model List<Answer>
 
+@{
+    int i = 1;
+}
+<div class="post-group" id="answers">
+    @foreach (var answer in @Model)
+    {
+        <div data-num="@i" class="post num" id="answer-@i">
+            <div class="post__avatar">
+                <img src="@answer.User.Avatar" class="msgimg"/>
+            </div>
+            <h3 class="post__author">
+                @answer.User.UserName
+            </h3>
+            <h4 class="post__timestamp">
+                @answer.CreatedTime
+            </h4>
+            <p class="post__body">
+                @answer.Content
+            </p>
+            <div class="post__actions">
+                <div class="button button--approve">
+                    <i class="fa fa-thumbs-o-up"></i><i class="fa fa-thumbs-up solid"></i>
+                </div>
+                <div class="button button--deny">
+                    <i class="fa fa-thumbs-o-down"></i><i class="fa fa-thumbs-down solid"></i>
+                </div>
+            </div>
+        </div>
+        i++;
+    }
+</div>

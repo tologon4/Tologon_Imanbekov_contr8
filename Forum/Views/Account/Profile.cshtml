@@ -12,7 +12,9 @@
     <div class="col-md-8 border-bottom">
         <div class="card-body">
             <div class="row ">
-                <div class=" col col-3"><h5>@Model.Email</h5></div>
+                <div class=" col col-3"><h5>@Model.Email</h5>  
+                    @if (User.Identity.IsAuthenticated) { <div class="col col-9 d-flex"><a class="my-auto btn btn-light me-auto" asp-action="Edit" asp-controller="Account">Edit profile</a></div> }
+                </div>
                 <div class="col col-12 mt-4">User Name: &nbsp;<h5>@Model.UserName</h5></div>
                 <div class="col col-12 mt-4">User's answers: &nbsp;<h5>@Model.AnswersCount</h5></div>
             </div>

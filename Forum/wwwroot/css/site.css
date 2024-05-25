@@ -19,19 +19,26 @@ html {
 
 body {
   margin-bottom: 60px;
+  background-color: #cedcee;
 }
 
 .cd__main{
   background: linear-gradient(to right, #74ebd5, #acb6e5) !important;
 }
 
-html {
-  color: #4d4d4d;
-  background-color: #ebeff1;
-  font-size: 16px;
-  font-weight: 300;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
+.num {
+  display: none;
+}
+.paginator {
+  line-height: 150%;
+}
+.paginator > span {
+  display: inline-block;
+  margin-right: 10px;
+  cursor: pointer;
+}
+.paginator_active {
+  color: red;
 }
 
 h1 {
@@ -104,8 +111,6 @@ ul {
 }
 
 .container {
-  width: 90%;
-  max-width: 900px;
   margin: 50px auto 100px;
 }
 

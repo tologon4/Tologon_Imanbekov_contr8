@@ -1,4 +1,3 @@
-@using Microsoft.EntityFrameworkCore.Metadata.Internal
 @model ForumTitle
 
 @{
@@ -18,14 +17,18 @@
     <h1 class="response__title">  
       @Model.Content
     </h1>
-    <div class="button button--fill comment-trigger">
-      <button>Ответить</button>
-    </div>
-    
+    @if (User.Identity.IsAuthenticated)
+    {
+      <button class="btn btn-primary" id="down-scroll">Ответить</button>
+    }
+    @{
+      int i = 1;
+    }
     <div class="post-group" id="answers">
+      <div class="num"></div>
       @foreach (var answer in ViewBag.Answers)
       {
-        <div class="post">
+        <div data-num="@i" class="post num">
           <div class="post__avatar">
             <img src="@answer.User.Avatar" class="msgimg"/>
           </div>
@@ -46,36 +49,41 @@
               <i class="fa fa-thumbs-o-down"></i><i class="fa fa-thumbs-down solid"></i>
             </div>
           </div>
-          
-        </div> 
+        </div>
+        i++;
       }
-      
     </div>
-    <div class="post__actions">
-            <div class="button button--fill comment-trigger">
-              <span>Comment...</span>
+    <div class="paginator" id="page">
+    </div>
+    @if (User.Identity.IsAuthenticated)
+    {
+      <div class="post__actions w-50" id="comment-to-scroll">
+        <div class="button button--fill comment-trigger">
+          <span>Comment...</span>
+        </div>
+        <div class="button button--flag">
+          <i class="fa fa-comment-o"></i><i class="fa fa-comment solid"></i>2
+        </div>
+        <div class="post__comments">
+          <div class="comment-form">
+            <div class="comment-form__avatar" id="error">
+              <img src="@ViewBag.CurrentUser.Avatar" class="msgimg"/>
             </div>
-            <div class="button button--flag">
-              <i class="fa fa-comment-o"></i><i class="fa fa-comment solid"></i>2
-            </div>
-            <div class="post__comments">
-              <div class="comment-form">
-                <div class="comment-form__avatar" id="error">
-                  <img src="@ViewBag.CurrentUser.Avatar" class="msgimg"/>
-                </div>
-                <textarea id="comment-content"></textarea>
-                <div class="comment-form__actions">
-                  <div class="button button--light cancel">
-                    Cancel
-                  </div>
-                  <div class="button button--confirm" id="comment-button">
-                    Comment
-                  </div>
-                </div>
+            <textarea id="comment-content"></textarea>
+            <div class="comment-form__actions">
+              <div class="button button--light cancel">
+                Cancel
+              </div>
+              <div class="button button--confirm" id="comment-button">
+                Comment
               </div>
             </div>
-        
           </div>
+        </div>
+        
+      </div>
+    }
+    
   </div>
 </div>
 
@@ -83,24 +91,103 @@
 {
   <script>
     function sendAnswer(data){
-      $('#answers').append($(`
-      <div class="post">
-                <div class="post__avatar">
-                  <img src="${data.userAvatar}" class="msgimg"/>
-                </div>
-                <h3 class="post__author">
-                  ${data.userName}
-                </h3>
-                <h4 class="post__timestamp">
-                  ${data.createdTime}
-                </h4>
-                <p class="post__body">
-                  ${data.content}
-                </p>
-              </div>`));
+      $('#answers').append(`
+        <div class="post">
+          <div class="post__avatar">
+            <img src="${data.userAvatar}" class="msgimg"/>
+          </div>
+          <h3 class="post__author">
+            ${data.userName}
+          </h3>
+          <h4 class="post__timestamp">
+            ${data.createdTime}
+          </h4>
+          <p class="post__body">
+            ${data.content}
+          </p>
+        </div>
+      `);
     }
-    $().ready(function (){
+
+    $(document).ready(function (){
+      let count = @Model.Answers.Count;
+      let cnt = 5; 
+      let cnt_page = Math.ceil(count / cnt); 
+      
+      let paginator = document.querySelector(".paginator");
+      let page = "<button id='prev' disabled>Предыдущий</button>";
+      for (let i = 0; i < cnt_page; i++) {
+        page += "<span data-page=" + i * cnt + "  id=\"page" + (i + 1) + "\">" + (i + 1) + "</span>";
+      }
+        page += "<span data-page=" + i * cnt + "  id=\"page" +  1 + "\">" +   1 + "</span>";
+      
+      page += "<button id='next'>Следующий</button>";
+      paginator.innerHTML = page;
+     
+      let div_num = document.querySelectorAll(".num");
+      for (let i = 0; i < div_num.length; i++) {
+        if (i < cnt) {
+          div_num[i].style.display = "block";
+        } else {
+          div_num[i].style.display = "none";
+        }
+      }
+      
+      let currentPage = 0;
+      let main_page = document.getElementById("page1");
+      main_page.classList.add("paginator_active");
+
+      function showPage(pageNumber) {
+        let data_page = pageNumber * cnt;
+        main_page.classList.remove("paginator_active");
+        main_page = document.getElementById("page" + (pageNumber + 1));
+        main_page.classList.add("paginator_active");
+
+        let j = 0;
+        for (let i = 0; i < div_num.length; i++) {
+          if (i >= data_page && j < cnt) {
+            div_num[i].style.display = "block";
+            j++;
+          } else {
+            div_num[i].style.display = "none";
+          }
+        }
+
+        document.getElementById('prev').disabled = (pageNumber === 0);
+        document.getElementById('next').disabled = (pageNumber === cnt_page - 1);
+      }
+      
+      function pagination(event) {
+        let target = event.target;
+        
+        if (target.tagName.toLowerCase() === "span") {
+          let pageNumber = parseInt(target.id.replace('page', '')) - 1;
+          currentPage = pageNumber;
+          showPage(pageNumber);
+        }
+        
+        if (target.id === 'prev' && currentPage > 0) {
+          currentPage--;
+          showPage(currentPage);
+        }
+
+        if (target.id === 'next' && currentPage < cnt_page - 1) {
+          currentPage++;
+          showPage(currentPage);
+        }
+      }
+
+      document.querySelectorAll(".paginator span, #prev, #next").forEach(function(element) {
+        element.addEventListener("click", pagination);
+      });
+      
+      $('#down-scroll').click(function(){
+        $('html, body').animate({scrollTop: $(document).height() - $(window).height()}, 600);
+        return false;
+      });
+      
       $('#comment-button').click(function (e){
+        console.log('click');
         e.preventDefault();
         let comment = $('#comment-content').val();
         let forumId = @Model.Id;
@@ -117,7 +204,6 @@
             }else{
               $('#error').html('<span class="text-danger">Невозможно отправить ответ!</span>');
             }
-        
           }
         }); 
       });
