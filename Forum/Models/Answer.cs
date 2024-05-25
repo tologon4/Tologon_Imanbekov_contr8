@@ -7,7 +7,7 @@ public class Answer
     public string Content { get; set; }
     public int UserId { get; set; }
     public User? User { get; set; }
-    public int ForumTitleId { get; set; }
+    public int? ForumTitleId { get; set; }
     public ForumTitle? ForumTitle { get; set; }
     
     

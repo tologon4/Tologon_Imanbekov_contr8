@@ -1,8 +1,126 @@
+@using Microsoft.EntityFrameworkCore.Metadata.Internal
 @model ForumTitle
 
 @{
     ViewBag.Title = "title";
     Layout = "_Layout";
 }
+<header>
+  <h2>
+    <strong><a class="mx-3" asp-action="Profile" asp-controller="Account" asp-route-userId="@Model.UserId">@Model.User.UserName</a></strong><i class="fa fa-angle-right"></i><span class="mx-3"> @Model.Title</span> <i class="fa fa-angle-right"></i><span class=""> @Model.CreatedTime</span>
+  </h2>
+</header>
+<div class="response-group">
+  <div class="response">
+    <div class="response__number">
+      @Model.Id
+    </div>
+    <h1 class="response__title">  
+      @Model.Content
+    </h1>
+    <div class="button button--fill comment-trigger">
+      <button>Ответить</button>
+    </div>
+    
+    <div class="post-group" id="answers">
+      @foreach (var answer in ViewBag.Answers)
+      {
+        <div class="post">
+          <div class="post__avatar">
+            <img src="@answer.User.Avatar" class="msgimg"/>
+          </div>
+          <h3 class="post__author">
+            @answer.User.UserName
+          </h3>
+          <h4 class="post__timestamp">
+            @answer.CreatedTime
+          </h4>
+          <p class="post__body">
+            @answer.Content
+          </p>
+          <div class="post__actions">
+            <div class="button button--approve">
+              <i class="fa fa-thumbs-o-up"></i><i class="fa fa-thumbs-up solid"></i>
+            </div>
+            <div class="button button--deny">
+              <i class="fa fa-thumbs-o-down"></i><i class="fa fa-thumbs-down solid"></i>
+            </div>
+          </div>
+          
+        </div> 
+      }
+      
+    </div>
+    <div class="post__actions">
+            <div class="button button--fill comment-trigger">
+              <span>Comment...</span>
+            </div>
+            <div class="button button--flag">
+              <i class="fa fa-comment-o"></i><i class="fa fa-comment solid"></i>2
+            </div>
+            <div class="post__comments">
+              <div class="comment-form">
+                <div class="comment-form__avatar" id="error">
+                  <img src="@ViewBag.CurrentUser.Avatar" class="msgimg"/>
+                </div>
+                <textarea id="comment-content"></textarea>
+                <div class="comment-form__actions">
+                  <div class="button button--light cancel">
+                    Cancel
+                  </div>
+                  <div class="button button--confirm" id="comment-button">
+                    Comment
+                  </div>
+                </div>
+              </div>
+            </div>
+        
+          </div>
+  </div>
+</div>
 
-<h2>title</h2>
+@section Scripts
+{
+  <script>
+    function sendAnswer(data){
+      $('#answers').append($(`
+      <div class="post">
+                <div class="post__avatar">
+                  <img src="${data.userAvatar}" class="msgimg"/>
+                </div>
+                <h3 class="post__author">
+                  ${data.userName}
+                </h3>
+                <h4 class="post__timestamp">
+                  ${data.createdTime}
+                </h4>
+                <p class="post__body">
+                  ${data.content}
+                </p>
+              </div>`));
+    }
+    $().ready(function (){
+      $('#comment-button').click(function (e){
+        e.preventDefault();
+        let comment = $('#comment-content').val();
+        let forumId = @Model.Id;
+        $.ajax({
+          url: '@Url.Action("SendAnswer", "Forum")',
+          type: 'POST',
+          data: {  'content' : comment, 'forumId': forumId },
+          success: function(data){
+            console.log(data);
+            if (data.isSuccess == true){
+              console.log('check answer messa');
+              console.log(data.anwserVar);
+              sendAnswer(data.anwserVar);
+            }else{
+              $('#error').html('<span class="text-danger">Невозможно отправить ответ!</span>');
+            }
+        
+          }
+        }); 
+      });
+    });
+  </script>
+}
