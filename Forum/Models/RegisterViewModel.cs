@@ -19,7 +19,4 @@ public class RegisterViewModel
     [Remote(action: "CheckUsername", controller:"Validation", ErrorMessage = "Этот UserName уже занят, попробуйте еще раз!")]
     [RegularExpression(@"^\S+(?:\S+)?$", ErrorMessage = "Заполните UserName без пробела!")]
     public string UserName { get; set; }
-    [Required(ErrorMessage = "Заполните поле Номер Телефона")]
-    [RegularExpression(@"^0\d{9}$", ErrorMessage = "Заполните в формате x-цифра: 0 xxx xx xx xx")]
-    public string PhoneNumber { get; set; }
 }

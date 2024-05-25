@@ -11,16 +11,35 @@ public class AccountController : Controller
 {
     private UserManager<User> _userManager;
     private SignInManager<User> _signInManager;
-    private readonly IWebHostEnvironment _environment;
+    private  IWebHostEnvironment _environment;
+    private IHttpContextAccessor _httpContextAccessor;
+    private ForumDb _db { get; set; }
 
 
-    public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, IWebHostEnvironment environment)
+    public AccountController(UserManager<User> userManager, SignInManager<User> signInManager,
+        IWebHostEnvironment environment, ForumDb db, IHttpContextAccessor httpContextAccessor)
     {
+        _httpContextAccessor = httpContextAccessor;
         _userManager = userManager;
         _signInManager = signInManager;
         _environment = environment;
+        _db = db;
     }
 
+    [HttpGet]
+    public async Task<IActionResult> Profile(int? userId)
+    {
+        var referrer = _httpContextAccessor.HttpContext.Request.Headers["Referer"].ToString();
+        if (userId.HasValue)
+        {
+            User? user = _db.Users.FirstOrDefault(u => u.Id == userId);
+            if (user != null)
+                return View(user);
+            return Redirect(referrer);
+        }
+        return Redirect(referrer);
+    }
+    
     [HttpGet]
     public async Task<IActionResult> Login()
     {
@@ -46,10 +65,10 @@ public class AccountController : Controller
                 {
                     if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                         return Redirect(model.ReturnUrl);
-                    return RedirectToAction();
+                    return RedirectToAction("Profile", new {userId = user.Id });
                 }
             }
-            ModelState.AddModelError("", "Неправильный логин или пароль!\nИли вы заблокированы!");
+            ModelState.AddModelError("", "Неправильный логин или пароль!");
         }
         ModelState.AddModelError("", "Неправильная заполненная форма!");
         return View(model);
@@ -76,14 +95,14 @@ public class AccountController : Controller
             {
                 Email = model.Email,
                 UserName = model.UserName,
-                PhoneNumber = model.PhoneNumber,
-                Avatar = path
+                Avatar = path,
+                AnswersCount = 0
             };
             var result = await _userManager.CreateAsync(user, model.Password);
             if (result.Succeeded)
             {
                 await _signInManager.SignInAsync(user, false);
-                return RedirectToAction();
+                return RedirectToAction("Profile", new {userId = user.Id });
             }
             foreach (var error in result.Errors)
                 ModelState.AddModelError(string.Empty, error.Description);

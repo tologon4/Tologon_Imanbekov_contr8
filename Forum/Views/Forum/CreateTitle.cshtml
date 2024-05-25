@@ -1,0 +1,28 @@
+@model ForumTitle
+
+@{
+    ViewBag.Title = "Create Title";
+    Layout = "_Layout";
+}
+
+<div class="container">
+    <div class="row row-cols-1 mt-5">
+        <div class="col col-6 mx-auto border border-1 py-4 px-5">
+            <h5> Создание новой темы</h5>
+            <form asp-action="CreateTitle" asp-controller="Forum" asp-anti-forgery="true">
+                <div class="input-group mt-5">
+                    <div class="validation text-danger" asp-validation-summary="ModelOnly"></div>
+                    <label for="title"><span class="text-danger" asp-validation-for="Title"></span></label>
+                    <div class="input-group">
+                        <input asp-for="Title" type="text" class="form-control" placeholder="ForumTitle Title" id="title">
+                    </div>
+                    <label for="cont"><span class="text-danger" asp-validation-for="Content"></span></label>
+                    <div class="input-group mt-3">
+                        <textarea class="form-control h-100" asp-for="Content" placeholder="Content" type="text" id="cont" rows="4"></textarea>
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary rounded-2 w-100 mt-3">Создать новую тему</button>
+            </form>
+        </div>
+    </div>
+</div>
